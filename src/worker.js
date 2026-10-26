@@ -95,7 +95,7 @@ export default {
         default: return json({ error: "Not found" }, 404);
       }
     } catch (err) {
-      console.error(err);
+      console.error("API error: " + (err && err.message ? err.message : String(err)));
       return json({ error: "Something went wrong. Please try again or email the venue." }, 500);
     }
   },
