@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Play the Mockingbird</title>
+<meta name="description" content="Book a show at The Mockingbird Theater in Franklin, TN: request a date, sign the agreement, and send your advance and promo assets.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rye&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#17130f; --panel:#211b15; --panel2:#2a231b; --line:#3a3026; --ink:#ece2cd; --muted:#b3a68c;
+  --accent:#d9a441; --accent-ink:#1b150e; --ok:#7fb069; --warn:#e0a458; --bad:#d9665b;
+  --radius:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Inter,system-ui,sans-serif;-webkit-text-size-adjust:100%}
+a{color:var(--accent)}
+.wrap{max-width:760px;margin:0 auto;padding:20px 16px 80px}
+header.top{text-align:center;padding:18px 0 8px}
+header.top img{width:150px;height:auto}
+h1,h2,h3{font-family:"Source Serif 4",Georgia,serif;font-weight:600;line-height:1.2}
+h1{font-family:Rye,Georgia,serif;font-weight:400;font-size:clamp(28px,7vw,40px);margin:8px 0 4px;letter-spacing:.5px}
+h2{font-size:22px;margin:0 0 10px}
+h3{font-size:17px;margin:18px 0 6px}
+.sub{color:var(--muted);margin:0 0 6px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin:16px 0}
+.muted{color:var(--muted)}
+.small{font-size:14px}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0 0;padding:0;list-style:none;counter-reset:s}
+.steps li{background:var(--panel2);border-radius:10px;padding:10px;font-size:13px;color:var(--muted);counter-increment:s}
+.steps li::before{content:counter(s);display:block;font-family:Rye,serif;color:var(--accent);font-size:20px}
+@media(max-width:560px){.steps{grid-template-columns:repeat(2,1fr)}}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.facts div{background:var(--panel2);border-radius:10px;padding:10px 12px}
+.facts b{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+@media(max-width:560px){.facts{grid-template-columns:1fr}}
+label{display:block;font-weight:500;margin:12px 0 4px;font-size:15px}
+label .opt{color:var(--muted);font-weight:400;font-size:13px}
+input[type=text],input[type=email],input[type=tel],input[type=number],input[type=url],textarea,select{
+  width:100%;background:#120f0b;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:11px 12px;font:inherit}
+textarea{min-height:90px;resize:vertical}
+input:focus,textarea:focus,select:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:560px){.row{grid-template-columns:1fr}.row3{grid-template-columns:1fr 1fr}}
+.btn{display:inline-block;background:var(--accent);color:var(--accent-ink);border:0;border-radius:999px;padding:12px 22px;font:600 16px Inter,sans-serif;cursor:pointer;text-decoration:none}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.chip{background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:8px 12px;cursor:pointer;font:inherit;text-align:left;min-width:120px}
+.chip small{display:block;color:var(--muted);font-size:12px}
+.chip[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.chip[aria-pressed=true] small{color:var(--accent-ink)}
+.month{margin:12px 0 2px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.msg{border-radius:10px;padding:10px 12px;margin:12px 0;font-size:15px}
+.msg.err{background:#3a1d19;color:#f3c2bb}
+.msg.ok{background:#1f3019;color:#cfe8c2}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.tracker{display:flex;gap:6px;margin:12px 0 4px}
+.tracker span{flex:1;height:6px;border-radius:3px;background:var(--line)}
+.tracker span.on{background:var(--accent)}
+.status-line{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;font-size:13px;color:var(--muted)}
+.pill{display:inline-block;border-radius:999px;padding:3px 10px;font-size:13px;font-weight:600;background:var(--panel2);border:1px solid var(--line)}
+.pill.done{background:#1f3019;border-color:#33502a;color:#cfe8c2}
+.pill.todo{background:#3a2c14;border-color:#5c4520;color:#f2d49a}
+.pill.lock{color:var(--muted)}
+.agreement{background:#f4ecdb;color:#1d1810;border-radius:10px;padding:18px 18px 8px;max-height:460px;overflow:auto;font-family:"Source Serif 4",Georgia,serif;font-size:15.5px}
+.agreement h3{margin:14px 0 4px;font-size:16px}
+.agreement p{margin:0 0 10px}
+.agreement ul{margin:0 0 10px;padding-left:20px}
+.check{display:flex;gap:10px;align-items:flex-start;margin:10px 0;font-weight:400}
+.check input{margin-top:4px;width:20px;height:20px;accent-color:var(--accent);flex:none}
+.timeline{list-style:none;margin:0;padding:0}
+.timeline li{display:grid;grid-template-columns:88px 1fr;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.timeline li:first-child{border-top:0}
+.timeline .when{font-size:13px;color:var(--muted)}
+.timeline .when b{display:block;color:var(--ink);font-size:14px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+.cols div{font-size:14px;background:var(--panel2);border-radius:8px;padding:8px 10px}
+.cols div b{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin-bottom:2px}
+@media(max-width:560px){.timeline li{grid-template-columns:1fr}.cols{grid-template-columns:1fr}}
+.uploads{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:560px){.uploads{grid-template-columns:1fr}}
+.up{background:var(--panel2);border:1px dashed var(--line);border-radius:10px;padding:12px}
+.up b{display:block}
+.up .files{font-size:13px;color:var(--ok);margin-top:6px;word-break:break-word}
+.up input[type=file]{margin-top:8px;font-size:14px;max-width:100%;color:var(--muted)}
+details.more summary{cursor:pointer;color:var(--accent);margin:8px 0}
+footer{color:var(--muted);font-size:13px;text-align:center;margin-top:30px}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <img src="logo.png" alt="The Mockingbird Theater, Franklin, Tennessee" width="150" height="171">
+  </header>
+
+  <!-- ================= REQUEST VIEW ================= -->
+  <main id="view-request" class="hidden">
+    <h1>Play the Mockingbird</h1>
+    <p class="sub">A 170-seat, all-ages listening room at 230 Franklin Road, Building 6, Franklin, TN. Shows run Wednesday through Sunday.</p>
+
+    <ol class="steps">
+      <li>Pick an open date and tell us about your band</li>
+      <li>We review and approve your date</li>
+      <li>Sign the agreement right here</li>
+      <li>Send your advance, flyer and promo assets</li>
+    </ol>
+
+    <section class="card">
+      <h2>How shows work here</h2>
+      <div class="facts">
+        <div><b>Deal</b>60% to the artist, 40% to the venue, from the cover after a $250 production cost. No guarantees.</div>
+        <div><b>Draw we expect</b>40–60 per band Sun–Thu. 75–120 per band Fri–Sat.</div>
+        <div><b>Tickets</b>Sold through TuneHatch. You'll need a TuneHatch profile to get presale money.</div>
+        <div><b>Promo</b>Shared. Mockingbird's marketing team promotes the show, and you create and co-host the Facebook event 3 weeks out.</div>
+        <div><b>Show day</b>Load-in 4 PM, sound check 5 PM (last band first).</div>
+        <div><b>Payment</b>Venmo or PayPal within 2 business days. W-9 required.</div>
+      </div>
+    </section>
+
+    <form id="req-form" class="card" novalidate>
+      <h2>Request a date</h2>
+      <label>Open dates</label>
+      <div id="dates"><p class="muted small">Loading open dates…</p></div>
+      <input type="hidden" name="date" id="req-date">
+
+      <label for="altDates">Other dates that work <span class="opt">(optional)</span></label>
+      <input type="text" id="altDates" name="altDates" maxlength="200" placeholder="e.g. any Thursday in March">
+
+      <h3>Your band</h3>
+      <div class="row">
+        <div><label for="band">Band or artist name</label><input type="text" id="band" name="band" required maxlength="120" autocomplete="organization"></div>
+        <div><label for="genre">Genre</label><input type="text" id="genre" name="genre" maxlength="120"></div>
+      </div>
+      <div class="row">
+        <div><label for="hometown">Hometown</label><input type="text" id="hometown" name="hometown" maxlength="120"></div>
+        <div><label for="draw">Draw you expect for this date</label><input type="number" id="draw" name="draw" min="0" max="1000" inputmode="numeric"></div>
+      </div>
+      <label for="bio">Short bio <span class="opt">(we'll use it in promo)</span></label>
+      <textarea id="bio" name="bio" maxlength="3000"></textarea>
+      <label for="links">Links <span class="opt">(website, Spotify, YouTube, TikTok, one per line)</span></label>
+      <textarea id="links" name="links" maxlength="1500" style="min-height:70px"></textarea>
+      <div class="row">
+        <div><label for="instagram">Instagram handle</label><input type="text" id="instagram" name="instagram" maxlength="120" placeholder="@yourband"></div>
+        <div><label for="facebook">Facebook page</label><input type="text" id="facebook" name="facebook" maxlength="200"></div>
+      </div>
+      <label for="otherBands">Other bands on the bill <span class="opt">(if you're bringing a package)</span></label>
+      <textarea id="otherBands" name="otherBands" maxlength="600" style="min-height:60px"></textarea>
+
+      <h3>Contact</h3>
+      <div class="row">
+        <div><label for="contact">Your name</label><input type="text" id="contact" name="contact" required maxlength="120" autocomplete="name"></div>
+        <div><label for="email">Email</label><input type="email" id="email" name="email" required maxlength="200" autocomplete="email"></div>
+      </div>
+      <label for="phone">Phone <span class="opt">(optional)</span></label>
+      <input type="tel" id="phone" name="phone" maxlength="40" autocomplete="tel">
+      <label for="message">Anything else? <span class="opt">(optional)</span></label>
+      <textarea id="message" name="message" maxlength="2000" style="min-height:70px"></textarea>
+      <div class="hp" aria-hidden="true"><label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+
+      <div id="req-msg"></div>
+      <button class="btn" type="submit" id="req-btn">Send request</button>
+    </form>
+  </main>
+
+  <!-- ================= REQUEST SENT ================= -->
+  <main id="view-sent" class="hidden">
+    <h1>Request sent</h1>
+    <section class="card">
+      <p>Thanks! Mockingbird's booking team will review your date.</p>
+      <p><b>Bookmark this private link.</b> It's where you'll sign the agreement and send everything for your show once you're approved:</p>
+      <p><a id="sent-link" href="#"></a></p>
+      <button class="btn ghost" type="button" id="copy-link">Copy link</button>
+    </section>
+  </main>
+
+  <!-- ================= BAND PORTAL ================= -->
+  <main id="view-portal" class="hidden">
+    <h1 id="p-band">Your show</h1>
+    <p class="sub" id="p-date"></p>
+    <div class="tracker" id="p-tracker"><span></span><span></span><span></span><span></span><span></span></div>
+    <div class="status-line"><span>Requested</span><span>Approved</span><span>Signed</span><span>Advanced</span><span>Confirmed</span></div>
+
+    <section class="card" id="p-status"></section>
+
+    <section class="card" id="sec-agreement">
+      <h2>Agreement <span class="pill" id="pill-agreement"></span></h2>
+      <div id="agreement-body"></div>
+    </section>
+
+    <section class="card" id="sec-advance">
+      <h2>Advance <span class="pill" id="pill-advance"></span></h2>
+      <div id="advance-locked" class="muted">Opens after you sign the agreement.</div>
+      <form id="adv-form" class="hidden" novalidate>
+        <h3>Sound <span class="muted small">(goes to Alex, our stage manager)</span></h3>
+        <div class="row3">
+          <div><label for="a-members">Members</label><input type="number" id="a-members" name="members" min="0" max="30" inputmode="numeric"></div>
+          <div><label for="a-vox">Vocal mics</label><input type="number" id="a-vox" name="vox" min="0" max="30" inputmode="numeric"></div>
+          <div><label for="a-dis">DIs</label><input type="number" id="a-dis" name="dis" min="0" max="30" inputmode="numeric"></div>
+          <div><label for="a-amps">Amps on stage</label><input type="number" id="a-amps" name="amps" min="0" max="30" inputmode="numeric"></div>
+        </div>
+        <label for="a-acoustic">Acoustic instruments that need mics</label>
+        <input type="text" id="a-acoustic" name="acoustic" maxlength="300" placeholder="e.g. upright bass, fiddle">
+        <label for="a-soundNotes">Other sound needs</label>
+        <textarea id="a-soundNotes" name="soundNotes" maxlength="3000" style="min-height:70px"></textarea>
+        <p class="small muted">Upload your stage plot and rider in the uploads section below.</p>
+
+        <h3>Ticketing details for TuneHatch</h3>
+        <div class="row">
+          <div><label for="a-showName">Name of show / performers</label><input type="text" id="a-showName" name="showName" maxlength="200"></div>
+          <div><label for="a-startTime">Show start time</label><input type="text" id="a-startTime" name="startTime" maxlength="40" placeholder="e.g. 7:30 PM"></div>
+        </div>
+        <p class="small muted" id="bar-open">The bar opens 2 hours before show start.</p>
+        <div class="row3">
+          <div><label for="a-presale">Presale $</label><input type="number" id="a-presale" name="presale" min="0" step="0.01" inputmode="decimal"></div>
+          <div><label for="a-dayOf">Day-of $</label><input type="number" id="a-dayOf" name="dayOf" min="0" step="0.01" inputmode="decimal"></div>
+          <div><label for="a-vipPresale">VIP presale $</label><input type="number" id="a-vipPresale" name="vipPresale" min="0" step="0.01" inputmode="decimal"></div>
+          <div><label for="a-vipDayOf">VIP day-of $</label><input type="number" id="a-vipDayOf" name="vipDayOf" min="0" step="0.01" inputmode="decimal"></div>
+        </div>
+        <div class="row">
+          <div><label for="a-vipSeats">VIP seats <span class="opt">(first 2–3 rows)</span></label>
+            <select id="a-vipSeats" name="vipSeats"><option value="">Choose…</option><option>None</option><option>20</option><option>25</option><option>30</option></select></div>
+          <div><label for="a-ages">Ages</label>
+            <select id="a-ages" name="ages"><option value="">Choose…</option><option>All Ages</option><option>18+</option><option>21+</option></select></div>
+        </div>
+        <label for="a-description">Show description <span class="opt">(for the TuneHatch event page)</span></label>
+        <textarea id="a-description" name="description" maxlength="3000"></textarea>
+        <label for="a-tunehatch">Your TuneHatch profile link</label>
+        <input type="text" id="a-tunehatch" name="tunehatch" maxlength="300" placeholder="Required to receive presale money">
+
+        <h3>Promo links</h3>
+        <div class="row">
+          <div><label for="a-fbEvent">Facebook event link</label><input type="text" id="a-fbEvent" name="fbEvent" maxlength="300" placeholder="Co-hosted with Mockingbird"></div>
+          <div><label for="a-instagram">Instagram handle</label><input type="text" id="a-instagram" name="instagram" maxlength="120"></div>
+        </div>
+
+        <h3>Payment</h3>
+        <div class="row">
+          <div><label for="a-payMethod">Pay me by</label>
+            <select id="a-payMethod" name="payMethod"><option value="">Choose…</option><option>Venmo</option><option>PayPal</option></select></div>
+          <div><label for="a-payHandle">Venmo or PayPal username</label><input type="text" id="a-payHandle" name="payHandle" maxlength="120"></div>
+        </div>
+        <p class="small muted">You'll also need a W-9 on file before payment. Download it from the <a href="https://www.irs.gov/pub/irs-pdf/fw9.pdf" target="_blank" rel="noopener">IRS</a> and send it to the booking team directly. Please don't upload it here, since it holds your tax ID. <span id="w9-state"></span></p>
+
+        <div id="adv-msg"></div>
+        <button class="btn" type="submit">Save advance</button>
+        <span class="small muted" style="margin-left:8px">You can come back and update it any time.</span>
+      </form>
+    </section>
+
+    <section class="card" id="sec-uploads">
+      <h2>Flyer and promo assets <span class="pill" id="pill-uploads"></span></h2>
+      <div id="uploads-locked" class="muted">Opens once your date is approved.</div>
+      <div id="uploads-open" class="hidden">
+        <p class="small muted">JPG, PNG, WEBP, GIF or PDF, up to 5 MB each. For flyers, a 4:5 portrait (1080×1350) works on both Instagram and Facebook. Printed flyers can be mailed or dropped off at the theater.</p>
+        <div class="uploads">
+          <div class="up" data-kind="flyer"><b>Show flyer</b><span class="small muted">Include the date, time, ticket link and the Mockingbird name.</span><div class="files"></div><input type="file" accept="image/*,application/pdf"></div>
+          <div class="up" data-kind="press"><b>Press photo</b><span class="small muted">Hi-res, landscape or square.</span><div class="files"></div><input type="file" accept="image/*"></div>
+          <div class="up" data-kind="logo"><b>Band logo</b><span class="small muted">PNG with transparent background if you have one.</span><div class="files"></div><input type="file" accept="image/*,application/pdf"></div>
+          <div class="up" data-kind="stageplot"><b>Stage plot and rider</b><span class="small muted">Goes straight to Alex.</span><div class="files"></div><input type="file" accept="image/*,application/pdf"></div>
+        </div>
+        <div id="up-msg"></div>
+      </div>
+    </section>
+
+    <section class="card" id="sec-promo">
+      <h2>Promo plan, both sides</h2>
+      <p class="small muted">Shows sell when we both post. Here's who does what, with dates worked out from your show date.</p>
+      <ol class="timeline" id="promo-timeline"></ol>
+    </section>
+
+    <section class="card">
+      <h2>Show night</h2>
+      <div class="facts">
+        <div><b>Load-in</b>4 PM unless we've agreed otherwise, through the side or back door by the stage.</div>
+        <div><b>Sound check</b>5 PM, last band first. Miss it and you'll get a quick line check only.</div>
+        <div><b>Set times</b><span id="p-settime">Set by the venue before the show.</span> Multiple sets: 15–20 minute breaks.</div>
+        <div><b>Tech questions</b><a href="mailto:alex@mockingbirdtheater.com">alex@mockingbirdtheater.com</a></div>
+      </div>
+      <h3>Parking during construction</h3>
+      <p class="small">Follow the gravel driveway behind the theater to the back or side stage door. Unload, then move your vehicle to a nearby lot right away. Cars and buses can't stay parked in the driveway, and the factory may tow vehicles that aren't moved. Please stay off the grass.</p>
+      <p class="small muted">If more than one band is playing, set up with as much gear ready to go as possible so changeovers stay short.</p>
+    </section>
+  </main>
+
+  <!-- ================= ERROR VIEW ================= -->
+  <main id="view-error" class="hidden">
+    <h1>Hmm.</h1>
+    <section class="card"><p id="err-text">This link isn't valid.</p><p><a href="/">Request a date instead</a></p></section>
+  </main>
+
+  <footer>The Mockingbird Theater · 230 Franklin Road, Building 6 · Franklin, TN</footer>
+</div>
+
+<template id="agreement-tpl">
+  <h3 style="text-align:center;font-size:18px">The Mockingbird Theater Performance Agreement</h3>
+  <p style="text-align:center" class="small">Version <span data-f="version"></span></p>
+  <p><b>Artist:</b> <span data-f="band"></span><br><b>Show date:</b> <span data-f="date"></span><br><b>Buyer:</b> The Mockingbird Theater, LLC, by Maggie Fournier, Buyer Representative<br><b>Venue:</b> The Mockingbird Theater, 230 Franklin Road, Building 6, Franklin, TN</p>
+
+  <h3>1. Load-in, sound check and set times</h3>
+  <p>Load-in is at 4 PM unless otherwise agreed, through the side or back door by the stage. If more than one band is playing, Artist will set up so that as much equipment as possible is ready to go, to keep changeovers short. Sound check is at 5 PM unless otherwise agreed and runs from the last band to the first; the first band sound checks and then plays. If Artist misses sound check, Artist will get a quick line check before the set, and a full sound check can't be guaranteed. Set times are set by the venue before the show. If one band plays multiple sets, breaks of 15–20 minutes are encouraged.</p>
+
+  <h3>2. Advance and technical needs</h3>
+  <p>Artist will provide a stage plot and rider, the number of members, vocal mics, DIs and amps on stage, any acoustic instruments needing mics, and any other sound needs as soon as possible, through this portal or to the stage manager at alex@mockingbirdtheater.com.</p>
+
+  <h3>3. Draw</h3>
+  <p>For Sunday–Thursday shows, the venue expects a draw of 40–60 per band. For Friday and Saturday shows, the venue expects 75–120 per band. The venue will note the draw, and it will affect future bookings and which days Artist is booked on.</p>
+
+  <h3>4. Promotion</h3>
+  <p>Promotion is shared. Artist, the band and/or its management will create a Facebook event and tag or co-host it with The Mockingbird Theater page no later than three weeks before the show, and will promote the show on Instagram and on Artist's website. Artist will provide a show flyer, press photo, logo and show description for the venue's use. The venue's marketing team will list the show on TuneHatch and promote it on the venue's social media channels. Meeting the draw expectations depends on both parties promoting the show.</p>
+
+  <h3>5. Payment</h3>
+  <p>Payment is a 60/40 split of the cover charge: 60% to Artist and 40% to The Mockingbird Theater, calculated after a $250 production cost deducted for every show. The Mockingbird Theater does not offer guarantees.</p>
+  <p>The venue is partnered with TuneHatch.com for ticketing and event pages. Artist must create a TuneHatch profile to receive presale ticket money. Thirty (30) days after the show date, unclaimed presale money will be added to The Mockingbird Theater's maintenance fund. The venue also takes cash covers at the door. Artist's TuneHatch profile will be listed on the event page, where Artist can add links and YouTube and TikTok videos.</p>
+  <p>Artist will provide Venmo or PayPal details in advance. Payment will be sent within two (2) business days after the show. To receive payment, Artist must submit a completed IRS Form W-9. Artists paid at or above the IRS reporting threshold in a calendar year (currently $2,000) will receive a Form 1099.</p>
+
+  <h3>6. Radius clause</h3>
+  <p>Artist agrees to a radius clause of 20 miles from The Mockingbird Theater for 30 days before and 30 days after the show date. Promoting any other event inside this radius during that period may void this agreement's terms.</p>
+
+  <h3>7. Cancellation</h3>
+  <p>Buyer may cancel this event up to 30 days before the show date, or at any time if inclement weather makes the performance impossible or unsafe, and will not be liable for any Artist expenses or compensation. Any deposits paid to Artist before the event are exempt.</p>
+
+  <h3>8. Venue termination right</h3>
+  <p>The Mockingbird Theater, LLC may terminate this agreement at any time before the show date if there is a change in venue ownership, management or operational control. Buyer will give Artist written notice as soon as reasonably practicable. If no tickets have been sold, this agreement is void with no further obligation to either party. If tickets have been sold, Buyer and Artist will cooperate in good faith to either transfer the booking to the successor operator or arrange an appropriate cancellation and refund process. Buyer will not be liable for any Artist expenses, lost profits or compensation beyond any non-refundable deposits already paid.</p>
+
+  <h3>9. Recording and reproduction</h3>
+  <p>Artist permits Buyer and/or its affiliated partners to record, photograph or otherwise reproduce the visual and/or audio performance during and after the event. Buyer and its affiliated partners agree not to sell reproductions of Artist's performance without Artist's prior written consent. Any broadcast, live or otherwise, of Artist's performance also requires Artist's prior written consent.</p>
+
+  <h3>10. Agreement</h3>
+  <p>Buyer engages Artist, and Artist agrees to furnish the performance described here, on all the terms and conditions above. Failure to follow these conditions may be a breach of contract. Buyer accepted this booking by approving Artist's date. Artist signs electronically below by typing their name; the date, time and IP address of the signature are recorded, and Artist agrees that this electronic signature has the same effect as a handwritten one.</p>
+</template>
+
+<script>
+(() => {
+  const AGREEMENT_VERSION = "2026-10-A";
+  const STAGES = ["Requested", "Approved", "Agreement Signed", "Advanced", "Confirmed"];
+  const $ = (s, el = document) => el.querySelector(s);
+  const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+  const params = new URLSearchParams(location.search);
+  const token = params.get("t");
+  let SHOW = null;
+
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const parseDate = (iso) => { const [y, m, d] = iso.split("-").map(Number); return new Date(y, m - 1, d); };
+  const fmtLong = (iso) => parseDate(iso).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+  const fmtShort = (d) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const addDays = (iso, n) => { const d = parseDate(iso); d.setDate(d.getDate() + n); return d; };
+  const show = (id) => { $$("main").forEach((m) => m.classList.add("hidden")); $(id).classList.remove("hidden"); };
+  const msg = (el, text, kind = "err") => { el.innerHTML = text ? `<div class="msg ${kind}">${esc(text)}</div>` : ""; };
+
+  async function api(path, opts = {}) {
+    const res = await fetch(path, opts);
+    let data = {};
+    try { data = await res.json(); } catch {}
+    if (!res.ok) throw new Error(data.error || "Something went wrong. Please try again.");
+    return data;
+  }
+
+  // ---------------- Request view ----------------
+  async function initRequest() {
+    show("#view-request");
+    const box = $("#dates");
+    try {
+      const { dates } = await api("/api/dates");
+      if (!dates.length) { box.innerHTML = '<p class="muted small">No open dates are posted right now. List the dates you\'re after below and we\'ll get back to you.</p>'; return; }
+      let html = "", lastMonth = "";
+      for (const d of dates) {
+        const dt = parseDate(d.date);
+        const month = dt.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+        if (month !== lastMonth) { if (lastMonth) html += "</div>"; html += `<div class="month">${month}</div><div class="chips">`; lastMonth = month; }
+        const day = dt.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+        const wk = [5, 6].includes(dt.getDay()) ? "Fri/Sat draw: 75–120" : "Draw: 40–60";
+        html += `<button type="button" class="chip" aria-pressed="false" data-date="${esc(d.date)}">${esc(day)}<small>${esc(d.notes || wk)}</small></button>`;
+      }
+      box.innerHTML = html + "</div>";
+      box.addEventListener("click", (e) => {
+        const b = e.target.closest(".chip"); if (!b) return;
+        $$(".chip", box).forEach((c) => c.setAttribute("aria-pressed", "false"));
+        b.setAttribute("aria-pressed", "true");
+        $("#req-date").value = b.dataset.date;
+      });
+    } catch (e) { box.innerHTML = `<p class="muted small">${esc(e.message)}</p>`; }
+
+    $("#req-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const f = e.target, out = $("#req-msg"), btn = $("#req-btn");
+      const data = Object.fromEntries(new FormData(f));
+      if (!data.date) return msg(out, "Pick one of the open dates above.");
+      if (!data.band || !data.contact || !data.email) return msg(out, "Please add your band name, your name and email.");
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(data.email)) return msg(out, "That email doesn't look right.");
+      btn.disabled = true; btn.textContent = "Sending…"; msg(out, "");
+      try {
+        const r = await api("/api/request", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(data) });
+        const link = `${location.origin}/?t=${r.token}`;
+        $("#sent-link").href = link; $("#sent-link").textContent = link;
+        show("#view-sent"); window.scrollTo(0, 0);
+      } catch (err) { msg(out, err.message); btn.disabled = false; btn.textContent = "Send request"; }
+    });
+    $("#copy-link").addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText($("#sent-link").href); $("#copy-link").textContent = "Copied"; } catch {}
+    });
+  }
+
+  // ---------------- Portal view ----------------
+  async function loadPortal() {
+    try {
+      const r = await api(`/api/show?t=${encodeURIComponent(token)}`);
+      SHOW = r.show; renderPortal();
+    } catch (e) { $("#err-text").textContent = e.message; show("#view-error"); }
+  }
+
+  function stageIndex(s) { const i = STAGES.indexOf(s); return i; }
+
+  function renderPortal() {
+    const s = SHOW; show("#view-portal");
+    document.title = `${s.band} · Mockingbird`;
+    $("#p-band").textContent = s.band;
+    $("#p-date").textContent = s.showDate ? fmtLong(s.showDate) + (s.setTime ? ` · Set: ${s.setTime}` : "") : "";
+    if (s.setTime) $("#p-settime").textContent = `Your set: ${s.setTime}.`;
+    const idx = stageIndex(s.status);
+    $$("#p-tracker span").forEach((el, i) => el.classList.toggle("on", idx >= i));
+
+    const st = $("#p-status");
+    const closed = s.status === "Declined" || s.status === "Cancelled";
+    const lines = {
+      Requested: "<b>Request received.</b> Mockingbird's booking team is reviewing your date. Check back here; the agreement opens as soon as you're approved.",
+      Approved: "<b>You're approved.</b> Next: sign the agreement below, then send your advance and promo assets.",
+      "Agreement Signed": "<b>Agreement signed.</b> Next: fill in the advance and upload your flyer, press photo and logo.",
+      Advanced: "<b>Advance received.</b> We'll confirm once everything is in. Keep the promo plan below going.",
+      Confirmed: "<b>You're confirmed.</b> See you at load-in!",
+      Declined: "This date didn't work out. Feel free to request another.",
+      Cancelled: "This show has been cancelled. Reach out to the booking team with any questions.",
+    };
+    st.innerHTML = `<p style="margin:0">${lines[s.status] || ""}</p>` + (closed ? '<p><a href="/">Request another date</a></p>' : "");
+    $("#p-tracker").classList.toggle("hidden", closed);
+    $$(".status-line")[0].classList.toggle("hidden", closed);
+    ["#sec-agreement", "#sec-advance", "#sec-uploads", "#sec-promo"].forEach((id) => $(id).classList.toggle("hidden", closed));
+    if (closed) return;
+
+    renderAgreement(idx);
+    renderAdvance(idx);
+    renderUploads(idx);
+    renderPromo();
+  }
+
+  function pill(el, text, kind) { el.textContent = text; el.className = `pill ${kind}`; }
+
+  function agreementHTML() {
+    const t = $("#agreement-tpl").content.cloneNode(true);
+    t.querySelector('[data-f="version"]').textContent = AGREEMENT_VERSION;
+    t.querySelector('[data-f="band"]').textContent = SHOW.band;
+    t.querySelector('[data-f="date"]').textContent = SHOW.showDate ? fmtLong(SHOW.showDate) : "";
+    const div = document.createElement("div"); div.className = "agreement"; div.appendChild(t); return div;
+  }
+
+  function renderAgreement(idx) {
+    const body = $("#agreement-body"); body.innerHTML = "";
+    const p = $("#pill-agreement");
+    if (SHOW.signedAt) {
+      pill(p, "Signed", "done");
+      const when = new Date(SHOW.signedAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" });
+      body.innerHTML = `<p>Signed by <b>${esc(SHOW.signedName)}</b>${SHOW.signedTitle ? ", " + esc(SHOW.signedTitle) : ""} on ${esc(when)} (version ${esc(SHOW.agreementVersion)}).</p><details class="more"><summary>View the agreement</summary></details>`;
+      $("details", body).appendChild(agreementHTML());
+      return;
+    }
+    if (idx < 1) { pill(p, "Opens after approval", "lock"); body.innerHTML = '<p class="muted">You can read it now. Signing opens once your date is approved.</p><details class="more"><summary>Preview the agreement</summary></details>'; $("details", body).appendChild(agreementHTML()); return; }
+    pill(p, "Ready to sign", "todo");
+    body.appendChild(agreementHTML());
+    const form = document.createElement("form"); form.noValidate = true;
+    form.innerHTML = `
+      <label class="check"><input type="checkbox" name="ackPresale"> I understand presale money not claimed through TuneHatch within 30 days after the show goes to the Mockingbird maintenance fund.</label>
+      <label class="check"><input type="checkbox" name="ackRadius"> I agree to the 20-mile radius for 30 days before and after the show.</label>
+      <label class="check"><input type="checkbox" name="ackPromo"> We'll create the Facebook event and co-host it with Mockingbird at least 3 weeks before the show, and promote on Instagram.</label>
+      <label class="check"><input type="checkbox" name="agree"> I've read this agreement and I'm authorized to sign for the artist.</label>
+      <div class="row">
+        <div><label for="sig-name">Type your full name to sign</label><input type="text" id="sig-name" name="name" maxlength="120" autocomplete="name"></div>
+        <div><label for="sig-title">Role <span class="opt">(e.g. band leader, manager)</span></label><input type="text" id="sig-title" name="title" maxlength="120"></div>
+      </div>
+      <div id="sig-msg"></div>
+      <button class="btn" type="submit">Sign agreement</button>`;
+    body.appendChild(form);
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const out = $("#sig-msg", form), btn = $("button", form);
+      const d = Object.fromEntries(new FormData(form));
+      const payload = { t: token, version: AGREEMENT_VERSION, name: (d.name || "").trim(), title: d.title || "", ackPresale: !!d.ackPresale, ackRadius: !!d.ackRadius, ackPromo: !!d.ackPromo, agree: !!d.agree };
+      if (!(payload.ackPresale && payload.ackRadius && payload.ackPromo && payload.agree)) return msg(out, "Please check every box to sign.");
+      if (payload.name.length < 3) return msg(out, "Type your full name to sign.");
+      btn.disabled = true; btn.textContent = "Signing…";
+      try { await api("/api/sign", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) }); await loadPortal(); $("#sec-advance").scrollIntoView({ behavior: "smooth" }); }
+      catch (err) { msg(out, err.message); btn.disabled = false; btn.textContent = "Sign agreement"; }
+    });
+  }
+
+  function renderAdvance(idx) {
+    const p = $("#pill-advance"), form = $("#adv-form");
+    if (idx < 2) { pill(p, "Locked", "lock"); form.classList.add("hidden"); $("#advance-locked").classList.remove("hidden"); return; }
+    $("#advance-locked").classList.add("hidden"); form.classList.remove("hidden");
+    pill(p, SHOW.advanceAt ? "Saved" : "To do", SHOW.advanceAt ? "done" : "todo");
+    const a = SHOW.advance;
+    for (const [k, v] of Object.entries(a)) { const el = form.elements[k]; if (el && v !== "" && v !== null) el.value = v; }
+    if (!form.elements.instagram.value && SHOW.instagram) form.elements.instagram.value = SHOW.instagram;
+    if (!form.elements.showName.value) form.elements.showName.value = SHOW.band + (SHOW.otherBands ? " with " + SHOW.otherBands.split(/\n+/).join(", ") : "");
+    $("#w9-state").innerHTML = SHOW.w9 ? '<b style="color:var(--ok)">W-9 received.</b>' : "";
+    if (form.dataset.bound) return; form.dataset.bound = "1";
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const out = $("#adv-msg"), btn = $("button[type=submit]", form);
+      btn.disabled = true; btn.textContent = "Saving…"; msg(out, "");
+      try {
+        await api("/api/advance", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ t: token, advance: Object.fromEntries(new FormData(form)) }) });
+        msg(out, "Saved. Thanks!", "ok"); await loadPortal();
+      } catch (err) { msg(out, err.message); }
+      btn.disabled = false; btn.textContent = "Save advance";
+    });
+  }
+
+  function renderUploads(idx) {
+    const p = $("#pill-uploads");
+    if (idx < 1) { pill(p, "Locked", "lock"); $("#uploads-locked").classList.remove("hidden"); $("#uploads-open").classList.add("hidden"); return; }
+    $("#uploads-locked").classList.add("hidden"); $("#uploads-open").classList.remove("hidden");
+    const f = SHOW.files;
+    const have = ["flyer", "press", "logo"].filter((k) => f[k].length).length;
+    pill(p, have === 3 ? "Received" : `${have} of 3 promo files`, have === 3 ? "done" : "todo");
+    $$(".up").forEach((box) => {
+      const k = box.dataset.kind;
+      $(".files", box).innerHTML = f[k].map((x) => `✓ ${esc(x.name)}`).join("<br>");
+      const input = $("input[type=file]", box);
+      if (input.dataset.bound) return; input.dataset.bound = "1";
+      input.addEventListener("change", async () => {
+        const file = input.files[0]; if (!file) return;
+        const out = $("#up-msg");
+        if (file.size > 5 * 1024 * 1024) { msg(out, "That file is over 5 MB. Please send a smaller version."); input.value = ""; return; }
+        msg(out, `Uploading ${file.name}…`, "ok");
+        const fd = new FormData(); fd.append("file", file);
+        try { await api(`/api/upload?t=${encodeURIComponent(token)}&kind=${k}`, { method: "POST", body: fd }); msg(out, `${file.name} uploaded.`, "ok"); await loadPortal(); }
+        catch (err) { msg(out, err.message); }
+        input.value = "";
+      });
+    });
+  }
+
+  function renderPromo() {
+    const s = SHOW; if (!s.showDate) return;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const files = s.files, a = s.advance;
+    const items = [
+      { when: "Right away", d: null, title: "Assets in",
+        us: "Adds your show to TuneHatch and the venue calendar once your details are in.",
+        you: "Upload flyer, press photo and logo. Make your TuneHatch profile.", done: files.flyer.length && files.press.length && files.logo.length && a.tunehatch },
+      { when: "3 weeks out", d: -21, title: "Announce",
+        us: "Accepts your Facebook co-host invite and Instagram Collab post, and announces the show on Mockingbird's channels.",
+        you: "Create the Facebook event and co-host it with The Mockingbird Theater (deadline). Post the announcement on Instagram as a Collab with Mockingbird.", done: !!a.fbEvent },
+      { when: "2 weeks out", d: -14, title: "Build it",
+        us: "Shares your posts and stories.",
+        you: "Second post: a video clip, rehearsal or song teaser, with the ticket link.", done: false },
+      { when: "Show week", d: -5, title: "Reminder",
+        us: "Reminder post and stories for the week's shows.",
+        you: "\"This week\" post and stories with the ticket link. Tag Mockingbird so we can reshare.", done: false },
+      { when: "Day of show", d: 0, title: "Tonight",
+        us: "Day-of story and reshares.",
+        you: "Stories from load-in and sound check. Tag Mockingbird.", done: false },
+      { when: "After the show", d: 2, title: "Recap",
+        us: "Shares photos or video from the night.",
+        you: "Thank-you post. Reshare the venue's photos.", done: false },
+    ];
+    $("#promo-timeline").innerHTML = items.map((it) => {
+      const date = it.d === null ? "" : fmtShort(addDays(s.showDate, it.d));
+      const past = it.d !== null && addDays(s.showDate, it.d) < today;
+      const tag = it.done ? ' <span class="pill done">Done</span>' : (past && it.d < 0 && it.d >= -21 && it.title === "Announce" ? ' <span class="pill todo">Overdue</span>' : "");
+      return `<li><div class="when"><b>${esc(it.when)}</b>${esc(date)}</div><div><b>${esc(it.title)}</b>${tag}<div class="cols"><div><b>Mockingbird</b>${esc(it.us)}</div><div><b>You</b>${esc(it.you)}</div></div></div></li>`;
+    }).join("");
+  }
+
+  if (token) loadPortal(); else initRequest();
+})();
+</script>
+</body>
+</html>
