@@ -118,7 +118,7 @@ footer{color:var(--muted);font-size:13px;text-align:center;margin-top:30px}
         <div><b>Deal</b>60% to the artist, 40% to the venue, from the cover after a $250 production cost. No guarantees.</div>
         <div><b>Draw we expect</b>40–60 per band Sun–Thu. 75–120 per band Fri–Sat.</div>
         <div><b>Tickets</b>Sold through TuneHatch. You'll need a TuneHatch profile to get presale money.</div>
-        <div><b>Promo</b>Shared. Mockingbird's marketing team promotes the show, and you create and co-host the Facebook event 3 weeks out.</div>
+        <div><b>Promo</b>Shared. Mockingbird's marketing team promotes the show, and you create and co-host the Facebook event 3 weeks out. Tag <a href="https://www.instagram.com/mockingbirdtheater/" target="_blank" rel="noopener">@mockingbirdtheater</a> on Instagram.</div>
         <div><b>Show day</b>Load-in 4 PM, sound check 5 PM (last band first).</div>
         <div><b>Payment</b>Venmo or PayPal within 2 business days. W-9 required.</div>
       </div>
@@ -260,7 +260,7 @@ footer{color:var(--muted);font-size:13px;text-align:center;margin-top:30px}
       <div id="uploads-open" class="hidden">
         <p class="small muted">JPG, PNG, WEBP, GIF or PDF, up to 5 MB each. For flyers, a 4:5 portrait (1080×1350) works on both Instagram and Facebook. Printed flyers can be mailed or dropped off at the theater.</p>
         <div class="uploads">
-          <div class="up" data-kind="flyer"><b>Show flyer</b><span class="small muted">Include the date, time, ticket link and the Mockingbird name.</span><div class="files"></div><input type="file" accept="image/*,application/pdf"></div>
+          <div class="up" data-kind="flyer"><b>Show flyer</b><span class="small muted">Include the date, time, ticket link, the Mockingbird name and @mockingbirdtheater.</span><div class="files"></div><input type="file" accept="image/*,application/pdf"></div>
           <div class="up" data-kind="press"><b>Press photo</b><span class="small muted">Hi-res, landscape or square.</span><div class="files"></div><input type="file" accept="image/*"></div>
           <div class="up" data-kind="logo"><b>Band logo</b><span class="small muted">PNG with transparent background if you have one.</span><div class="files"></div><input type="file" accept="image/*,application/pdf"></div>
           <div class="up" data-kind="stageplot"><b>Stage plot and rider</b><span class="small muted">Goes straight to Alex.</span><div class="files"></div><input type="file" accept="image/*,application/pdf"></div>
@@ -556,16 +556,16 @@ footer{color:var(--muted);font-size:13px;text-align:center;margin-top:30px}
         you: "Upload flyer, press photo and logo. Make your TuneHatch profile.", done: files.flyer.length && files.press.length && files.logo.length && a.tunehatch },
       { when: "3 weeks out", d: -21, title: "Announce",
         us: "Accepts your Facebook co-host invite and Instagram Collab post, and announces the show on Mockingbird's channels.",
-        you: "Create the Facebook event and co-host it with The Mockingbird Theater (deadline). Post the announcement on Instagram as a Collab with Mockingbird.", done: !!a.fbEvent },
+        you: "Create the Facebook event and co-host it with The Mockingbird Theater (deadline). Post the announcement on Instagram as a Collab with @mockingbirdtheater.", done: !!a.fbEvent },
       { when: "2 weeks out", d: -14, title: "Build it",
         us: "Shares your posts and stories.",
         you: "Second post: a video clip, rehearsal or song teaser, with the ticket link.", done: false },
       { when: "Show week", d: -5, title: "Reminder",
         us: "Reminder post and stories for the week's shows.",
-        you: "\"This week\" post and stories with the ticket link. Tag Mockingbird so we can reshare.", done: false },
+        you: "\"This week\" post and stories with the ticket link. Tag @mockingbirdtheater so we can reshare.", done: false },
       { when: "Day of show", d: 0, title: "Tonight",
         us: "Day-of story and reshares.",
-        you: "Stories from load-in and sound check. Tag Mockingbird.", done: false },
+        you: "Stories from load-in and sound check. Tag @mockingbirdtheater.", done: false },
       { when: "After the show", d: 2, title: "Recap",
         us: "Shares photos or video from the night.",
         you: "Thank-you post. Reshare the venue's photos.", done: false },
