@@ -1,5 +1,5 @@
 // Mockingbird Theater band portal API
-// Secrets (set in Cloudflare, never in code): AIRTABLE_TOKEN
+// Secrets (set in Cloudflare, never in code): AIRTABLE_TOKEN, CALENDAR_FEED_URL (optional)
 // Vars (wrangler.jsonc): AIRTABLE_BASE, ALLOWED_ORIGIN
 
 const AGREEMENT_VERSION = "2026-10-A";
@@ -158,13 +158,60 @@ async function readBody(request) {
 }
 
 // ---------- routes ----------
-async function getDates(env) {
+// Open dates = every Wed-Sun in the booking window with nothing on the venue calendar,
+// plus Airtable overrides: Open forces a date on (with notes), Hold/Booked/Closed forces it off.
+// Without CALENDAR_FEED_URL, only Airtable "Open" dates are offered.
+const SHOW_DAYS = [0, 3, 4, 5, 6]; // Sun, Wed, Thu, Fri, Sat
+const WINDOW_DAYS = 180;
+const MIN_LEAD_DAYS = 14;
+
+function isoAddDays(iso, n) {
+  const d = new Date(iso + "T12:00:00Z");
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+async function busyDates(env) {
+  if (!env.CALENDAR_FEED_URL) return null;
+  const cache = caches.default;
+  const key = new Request("https://cache.internal/mockingbird-busy");
+  const hit = await cache.match(key);
+  if (hit) return new Set((await hit.json()).busy);
+  const res = await fetch(env.CALENDAR_FEED_URL, { redirect: "follow" });
+  if (!res.ok) throw new Error(`Calendar feed ${res.status}`);
+  const data = await res.json();
+  if (!Array.isArray(data.busy)) throw new Error(`Calendar feed bad payload: ${JSON.stringify(data).slice(0, 200)}`);
+  await cache.put(key, new Response(JSON.stringify({ busy: data.busy }), { headers: { "cache-control": "max-age=300" } }));
+  return new Set(data.busy);
+}
+
+async function computeOpenDates(env) {
   const today = todayCentral();
-  const formula = encodeURIComponent(`AND({Status}='Open', NOT(IS_BEFORE({Date}, '${today}')))`);
-  const data = await at(env, `${T_DATES}?filterByFormula=${formula}&returnFieldsByFieldId=true&sort%5B0%5D%5Bfield%5D=${D.date}&sort%5B0%5D%5Bdirection%5D=asc`);
-  const dates = data.records
-    .map((r) => ({ date: r.fields[D.date], notes: r.fields[D.notes] || "" }))
-    .filter((d) => d.date);
+  const formula = encodeURIComponent(`NOT(IS_BEFORE({Date}, '${today}'))`);
+  const data = await at(env, `${T_DATES}?filterByFormula=${formula}&returnFieldsByFieldId=true`);
+  const overrides = new Map();
+  for (const r of data.records) {
+    const d = r.fields[D.date];
+    if (d && d >= today) overrides.set(d, { status: r.fields[D.status] || "", notes: r.fields[D.notes] || "" });
+  }
+  const busy = await busyDates(env);
+  const out = new Map();
+  if (busy) {
+    for (let i = MIN_LEAD_DAYS; i <= WINDOW_DAYS; i++) {
+      const iso = isoAddDays(today, i);
+      const dow = new Date(iso + "T12:00:00Z").getUTCDay();
+      if (SHOW_DAYS.includes(dow) && !busy.has(iso)) out.set(iso, "");
+    }
+  }
+  for (const [d, o] of overrides) {
+    if (o.status === "Open") out.set(d, o.notes);
+    else if (o.status) out.delete(d);
+  }
+  return [...out.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([date, notes]) => ({ date, notes }));
+}
+
+async function getDates(env) {
+  const dates = await computeOpenDates(env);
   return json({ dates }, 200, { "cache-control": "public, max-age=60" });
 }
 
@@ -181,9 +228,8 @@ async function postRequest(request, env) {
   }
 
   // Date must still be open
-  const formula = encodeURIComponent(`AND({Status}='Open', IS_SAME({Date}, '${date}', 'day'))`);
-  const open = await at(env, `${T_DATES}?filterByFormula=${formula}&maxRecords=1`);
-  if (!open.records.length) return json({ error: "That date is no longer available. Please pick another." }, 409);
+  const open = await computeOpenDates(env);
+  if (!open.some((d) => d.date === date)) return json({ error: "That date is no longer available. Please pick another." }, 409);
 
   const token = newToken();
   const fields = {
