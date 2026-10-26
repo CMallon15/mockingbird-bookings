@@ -61,7 +61,45 @@ const F = {
   payHandle: "fld5aqhGjd2QQQudZ",
   w9: "fld5u6LRwgFErVczi",
   advanceAt: "fldAEaxDHtxLbhSbl",
+  resendAt: "fldTAPyiMt6QAOGSY",
+  techUpdatedAt: "fldYaSV2YmNbGDE3w",
+  progress: "fldPEA0kRY5CwJguq",
+  missing: "fldaST15AO5UfocTd",
 };
+
+// What a band owes before the show. section = where it lives on the page.
+const CHECKLIST = [
+  { key: "agreement", label: "Sign the agreement", section: "sec-agreement", done: (f) => !!f[F.signedAt] },
+  { key: "sound", label: "Sound info", section: "adv-sound", done: (f) => f[F.members] != null && f[F.vox] != null },
+  { key: "stageplot", label: "Stage plot and rider", section: "sec-uploads", done: (f) => !!(f[F.stagePlot] || []).length },
+  { key: "tickets", label: "Ticket details", section: "adv-tickets", done: (f) => !!(f[F.startTime] && f[F.presale] != null && f[F.dayOf] != null && f[F.ages] && f[F.description]) },
+  { key: "tunehatch", label: "TuneHatch profile link", section: "adv-tickets", done: (f) => !!f[F.tunehatch] },
+  { key: "promoinfo", label: "Bio and Instagram", section: "adv-promo", done: (f) => !!(f[F.bio] && f[F.instagram]) },
+  { key: "fbevent", label: "Facebook event co-hosted", section: "adv-promo", done: (f) => !!f[F.fbEvent] },
+  { key: "flyer", label: "Show flyer", section: "sec-uploads", done: (f) => !!(f[F.flyer] || []).length },
+  { key: "press", label: "Press photo", section: "sec-uploads", done: (f) => !!(f[F.press] || []).length },
+  { key: "logo", label: "Band logo", section: "sec-uploads", done: (f) => !!(f[F.logo] || []).length },
+  { key: "payment", label: "Payment details", section: "adv-payment", done: (f) => !!(f[F.payMethod] && f[F.payHandle]) },
+];
+const TECH_FIELDS = ["members", "vox", "dis", "amps", "acoustic", "soundNotes"];
+
+function checklist(f) {
+  return CHECKLIST.map((c) => ({ key: c.key, label: c.label, section: c.section, done: c.done(f) }));
+}
+
+// Recompute progress after any band change; promote to "Advanced" when everything is in.
+async function syncProgress(env, rec, extra = {}) {
+  const merged = { ...rec.fields, ...extra };
+  const list = checklist(merged);
+  const missing = list.filter((c) => !c.done);
+  const fields = {
+    ...extra,
+    [F.progress]: `${list.length - missing.length} of ${list.length}`,
+    [F.missing]: missing.map((c) => c.label).join("\n") || null,
+  };
+  if (!missing.length && merged[F.status] === "Agreement Signed") fields[F.status] = "Advanced";
+  await at(env, T_SHOWS, { method: "PATCH", body: JSON.stringify({ records: [{ id: rec.id, fields }], typecast: true }) });
+}
 
 // Open Dates field IDs
 const D = { date: "fldRhteJq4oXsih49", status: "fldoSXP9FkYt7X4if", notes: "fld8Y9YXi0SSJdRo5" };
@@ -92,6 +130,7 @@ export default {
         case "POST /api/sign": return await postSign(request, env);
         case "POST /api/advance": return await postAdvance(request, env);
         case "POST /api/upload": return await postUpload(request, url, env);
+        case "POST /api/resend": return await postResend(request, env);
         default: return json({ error: "Not found" }, 404);
       }
     } catch (err) {
@@ -223,20 +262,23 @@ async function postRequest(request, env) {
   const contact = str(b.contact, 120);
   const email = str(b.email, 200).toLowerCase();
   const date = str(b.date, 10);
-  if (!band || !contact || !isEmail(email) || !isISODate(date)) {
+  const altDates = str(b.altDates, 200);
+  if (!band || !contact || !isEmail(email) || (date && !isISODate(date)) || (!date && !altDates)) {
     return json({ error: "Please fill in band name, contact name, a valid email and a date." }, 400);
   }
 
-  // Date must still be open
-  const open = await computeOpenDates(env);
-  if (!open.some((d) => d.date === date)) return json({ error: "That date is no longer available. Please pick another." }, 409);
+  // A picked date must still be open. With no date, the band told us what they want in altDates.
+  if (date) {
+    const open = await computeOpenDates(env);
+    if (!open.some((d) => d.date === date)) return json({ error: "That date is no longer available. Please pick another." }, 409);
+  }
 
   const token = newToken();
   const fields = {
     [F.band]: band,
     [F.status]: "Requested",
     [F.showDate]: date,
-    [F.altDates]: str(b.altDates, 200),
+    [F.altDates]: altDates,
     [F.contact]: contact,
     [F.email]: email,
     [F.phone]: str(b.phone, 40),
@@ -260,7 +302,10 @@ async function postRequest(request, env) {
 
 function publicShow(rec) {
   const f = rec.fields;
-  const files = (arr) => (arr || []).map((a) => ({ name: a.filename, url: a.url, type: a.type }));
+  const files = (arr) => (arr || []).map((a) => ({
+    name: a.filename, url: a.url, type: a.type,
+    thumb: a.thumbnails && a.thumbnails.large ? a.thumbnails.large.url : "",
+  }));
   return {
     band: f[F.band] || "",
     status: f[F.status] || "Requested",
@@ -270,6 +315,7 @@ function publicShow(rec) {
     email: f[F.email] || "",
     instagram: f[F.instagram] || "",
     otherBands: f[F.otherBands] || "",
+    checklist: checklist(f),
     agreementVersion: f[F.agreementVersion] || "",
     signedName: f[F.signedName] || "",
     signedTitle: f[F.signedTitle] || "",
@@ -282,6 +328,8 @@ function publicShow(rec) {
       vipSeats: f[F.vipSeats] || "", ages: f[F.ages] || "", description: f[F.description] || "",
       tunehatch: f[F.tunehatch] || "", fbEvent: f[F.fbEvent] || "",
       payMethod: f[F.payMethod] || "", payHandle: f[F.payHandle] || "",
+      bio: f[F.bio] || "", hometown: f[F.hometown] || "", instagram: f[F.instagram] || "",
+      facebook: f[F.facebook] || "", otherBands: f[F.otherBands] || "", links: f[F.links] || "",
     },
     w9: !!f[F.w9],
     advanceAt: f[F.advanceAt] || "",
@@ -305,6 +353,7 @@ async function postSign(request, env) {
   const status = rec.fields[F.status];
   if (rec.fields[F.signedAt]) return json({ error: "This agreement is already signed." }, 409);
   if (!SIGNABLE.includes(status)) return json({ error: "The agreement opens once Mockingbird approves your date." }, 409);
+  if (!rec.fields[F.showDate]) return json({ error: "We're still setting your show date. You can sign once it's on your page." }, 409);
   if (b.version !== AGREEMENT_VERSION) return json({ error: "The agreement was updated. Please reload the page and review it again." }, 409);
 
   const name = str(b.name, 120);
@@ -323,7 +372,7 @@ async function postSign(request, env) {
     [F.ackPromo]: true,
     [F.status]: "Agreement Signed",
   };
-  await at(env, T_SHOWS, { method: "PATCH", body: JSON.stringify({ records: [{ id: rec.id, fields }], typecast: true }) });
+  await syncProgress(env, rec, fields);
   return json({ ok: true });
 }
 
@@ -356,14 +405,20 @@ async function postAdvance(request, env) {
     [F.tunehatch]: str(a.tunehatch, 300),
     [F.fbEvent]: str(a.fbEvent, 300),
     [F.instagram]: str(a.instagram, 120) || rec.fields[F.instagram] || null,
+    [F.bio]: str(a.bio, 3000) || rec.fields[F.bio] || null,
+    [F.hometown]: str(a.hometown, 120),
+    [F.facebook]: str(a.facebook, 200),
+    [F.otherBands]: str(a.otherBands, 600),
     [F.payMethod]: sel(a.payMethod, ["Venmo", "PayPal"]),
     [F.payHandle]: str(a.payHandle, 120),
     [F.advanceAt]: new Date().toISOString(),
   };
   for (const k of Object.keys(fields)) if (fields[k] === "") fields[k] = null;
-  if (status === "Agreement Signed") fields[F.status] = "Advanced";
+  const norm = (v) => (v === undefined || v === null ? "" : String(v));
+  const techChanged = TECH_FIELDS.some((k) => norm(fields[F[k]]) !== norm(rec.fields[F[k]]));
+  if (techChanged && ["Advanced", "Confirmed"].includes(status)) fields[F.techUpdatedAt] = new Date().toISOString();
 
-  await at(env, T_SHOWS, { method: "PATCH", body: JSON.stringify({ records: [{ id: rec.id, fields }], typecast: true }) });
+  await syncProgress(env, rec, fields);
   return json({ ok: true });
 }
 
@@ -392,11 +447,42 @@ async function postUpload(request, url, env) {
   for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode(...buf.subarray(i, i + 0x8000));
   const filename = str(file.name, 120).replace(/[^\w.\- ]/g, "_") || `${kind}`;
 
+  // Flyer, press photo and logo hold one file each: a new upload replaces the old one.
+  if (kind !== "stageplot" && (rec.fields[field] || []).length) {
+    await at(env, T_SHOWS, { method: "PATCH", body: JSON.stringify({ records: [{ id: rec.id, fields: { [field]: [] } }] }) });
+  }
+  if (kind === "stageplot" && (rec.fields[field] || []).length >= 4) {
+    return json({ error: "That's the limit of 4 files. Email Alex if you need to send more." }, 409);
+  }
   const res = await fetch(`https://content.airtable.com/v0/${env.AIRTABLE_BASE}/${rec.id}/${field}/uploadAttachment`, {
     method: "POST",
     headers: { Authorization: `Bearer ${env.AIRTABLE_TOKEN}`, "content-type": "application/json" },
     body: JSON.stringify({ contentType: file.type, file: btoa(bin), filename }),
   });
   if (!res.ok) throw new Error(`Upload ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  const fresh = await findShow(env, t);
+  const extra = {};
+  if (kind === "stageplot" && ["Advanced", "Confirmed"].includes(fresh.fields[F.status])) extra[F.techUpdatedAt] = new Date().toISOString();
+  await syncProgress(env, fresh, extra);
   return json({ ok: true, name: filename });
+}
+
+// Email a band their portal link(s) again. Always answers the same way so it can't be used to probe emails.
+async function postResend(request, env) {
+  const b = await readBody(request);
+  const email = str(b.email, 200).toLowerCase();
+  const generic = json({ ok: true, message: "If that email has a booking with us, we just sent the link. Check your inbox and spam folder." });
+  if (!isEmail(email)) return json({ error: "Please enter a valid email." }, 400);
+  const safe = email.replace(/'/g, "");
+  const formula = encodeURIComponent(`AND(LOWER({Email})='${safe}', NOT(OR({Status}='Declined', {Status}='Cancelled')))`);
+  const data = await at(env, `${T_SHOWS}?filterByFormula=${formula}&maxRecords=10&returnFieldsByFieldId=true`);
+  const now = Date.now();
+  const due = data.records.filter((r) => !r.fields[F.resendAt] || now - Date.parse(r.fields[F.resendAt]) > 10 * 60 * 1000);
+  if (due.length) {
+    await at(env, T_SHOWS, {
+      method: "PATCH",
+      body: JSON.stringify({ records: due.map((r) => ({ id: r.id, fields: { [F.resendAt]: new Date().toISOString() } })) }),
+    });
+  }
+  return generic;
 }
