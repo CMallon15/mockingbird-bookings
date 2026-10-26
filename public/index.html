@@ -20,8 +20,8 @@ html{scroll-behavior:smooth;scroll-padding-top:12px}
 html{background:var(--bg)}
 body{margin:0;background:transparent;color:var(--ink);font:16px/1.55 Inter,system-ui,sans-serif;-webkit-text-size-adjust:100%}
 /* Ghosted stage photo behind everything */
-body::before{content:"";position:fixed;inset:0;z-index:-2;background:url(stage.jpg) center 40%/cover no-repeat;opacity:.55;filter:saturate(.9)}
-body::after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(23,19,15,.15) 0%,rgba(23,19,15,.55) 35%,rgba(23,19,15,.85) 65%,var(--bg) 100%)}
+body::before{content:"";position:fixed;inset:0;z-index:-2;background:url(stage.jpg) center 40%/cover no-repeat;opacity:.75;filter:saturate(.95)}
+body::after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(23,19,15,.05) 0%,rgba(23,19,15,.4) 35%,rgba(23,19,15,.7) 65%,rgba(23,19,15,.9) 100%)}
 .card{backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
 a{color:var(--accent)}
 .wrap{max-width:760px;margin:0 auto;padding:16px 16px 80px}
