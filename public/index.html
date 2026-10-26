@@ -136,6 +136,25 @@ details.full summary{cursor:pointer;color:var(--accent);margin:10px 0;font-weigh
 details.more summary{cursor:pointer;color:var(--accent);margin:4px 0}
 footer{color:var(--muted);font-size:13px;text-align:center;margin-top:30px}
 .hidden{display:none!important}
+/* link picker */
+.plat{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 4px}
+.plat button{display:inline-flex;align-items:center;gap:7px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:8px 13px 8px 10px;font:500 14px Inter,sans-serif;cursor:pointer}
+.plat button:hover{border-color:#5c4520}
+.plat button.added{border-color:#33502a;color:#cfe8c2}
+.plat button[aria-pressed=true]{border-color:var(--accent);background:#3a2c14}
+.plat svg,.link-ico svg,.link-chips svg{width:18px;height:18px;flex:none}
+.link-add{display:flex;align-items:center;gap:8px;margin:10px 0 0;background:#120f0b;border:1px solid var(--accent);border-radius:12px;padding:6px 6px 6px 12px}
+.link-add input{border:0!important;background:transparent!important;padding:8px 0!important;outline:none!important;min-width:0;flex:1}
+.link-ico{color:var(--accent);display:flex}
+.link-add{flex-wrap:wrap}
+.link-add input{flex:1 1 140px}
+.link-add .field-err{flex-basis:100%;order:5;margin:0 0 4px}
+.link-x{background:none;border:0;color:var(--muted);font-size:22px;line-height:1;cursor:pointer;padding:0 6px}
+.link-chips{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.link-chips li{display:flex;align-items:center;gap:10px;background:var(--panel2);border:1px solid #33502a;border-radius:10px;padding:8px 6px 8px 12px;font-size:14px;min-width:0}
+.link-chips li .ico{color:var(--ok);display:flex}
+.link-chips li b{font-weight:600;flex:none}
+.link-chips li a{color:var(--muted);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1}
 #print-area{display:none}
 @media print{
   body{background:#fff;color:#000}
@@ -169,8 +188,19 @@ footer{color:var(--muted);font-size:13px;text-align:center;margin-top:30px}
         <div><label for="band">Band or artist name</label><input type="text" id="band" name="band" required maxlength="120" autocomplete="organization"></div>
         <div><label for="genre">Genre</label><input type="text" id="genre" name="genre" maxlength="120"></div>
       </div>
-      <label for="links">Where can we hear you? <span class="opt">(Spotify, YouTube, website, one per line)</span></label>
-      <textarea id="links" name="links" maxlength="1500" style="min-height:64px"></textarea>
+      <label id="links-label">Where can we hear you?</label>
+      <p class="hint" style="margin-top:0">Tap a platform, or paste any link and we'll figure out what it is.</p>
+      <div class="plat" role="group" aria-labelledby="links-label" id="plat-buttons"></div>
+      <div class="link-add hidden" id="link-add">
+        <span class="link-ico" id="link-add-ico" aria-hidden="true"></span>
+        <input type="text" id="link-input" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Link">
+        <button type="button" class="btn small" id="link-ok">Add</button>
+        <button type="button" class="link-x" id="link-cancel" aria-label="Cancel">×</button>
+      </div>
+      <ul class="link-chips" id="link-chips" aria-live="polite"></ul>
+      <input type="hidden" name="links" id="links">
+      <input type="hidden" name="instagram" id="links-ig">
+      <input type="hidden" name="facebook" id="links-fb">
       <label for="draw">How many people do you expect to bring?</label>
       <input type="number" id="draw" name="draw" min="0" max="1000" inputmode="numeric" style="max-width:160px">
       <p class="hint">We expect 40–60 per band Sunday–Thursday, 75–120 Friday–Saturday.</p>
@@ -498,9 +528,93 @@ footer{color:var(--muted);font-size:13px;text-align:center;margin-top:30px}
     draw();
   }
 
+  // ---------- link picker ----------
+  const ICON = {
+    note: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>',
+    play: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="4"/><path d="M10 9.2v5.6l4.8-2.8z" fill="currentColor"/></svg>',
+    camera: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r="1" fill="currentColor"/></svg>',
+    clip: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2.5" width="14" height="19" rx="3"/><path d="M10.5 9.5v5l4-2.5z" fill="currentColor"/></svg>',
+    wave: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12v0M6.5 9v6M10 6v12M13.5 8.5v7M17 10.5v3M20.5 11.5v1"/></svg>',
+    disc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/></svg>',
+    people: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M16.5 14.6c2.6.2 4.4 2 5 5.4"/></svg>',
+    link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3.2-3.2a4.5 4.5 0 0 0-6.4-6.4L12 5.6"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3.2 3.2a4.5 4.5 0 0 0 6.4 6.4l1.2-1.2"/></svg>',
+    globe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 3.8 5.6 3.8 9s-1.2 6.4-3.8 9c-2.6-2.6-3.8-5.6-3.8-9S9.4 5.6 12 3z"/></svg>',
+  };
+  const PLATFORMS = [
+    { key: "spotify", name: "Spotify", icon: "note", hosts: ["spotify.com"], ph: "open.spotify.com/artist/…" },
+    { key: "youtube", name: "YouTube", icon: "play", hosts: ["youtube.com", "youtu.be"], ph: "youtube.com/@yourband" },
+    { key: "instagram", name: "Instagram", icon: "camera", hosts: ["instagram.com"], ph: "@yourband or instagram.com/yourband", handle: "https://instagram.com/" },
+    { key: "tiktok", name: "TikTok", icon: "clip", hosts: ["tiktok.com"], ph: "@yourband or tiktok.com/@yourband", handle: "https://tiktok.com/@" },
+    { key: "apple", name: "Apple Music", icon: "note", hosts: ["music.apple.com"], ph: "music.apple.com/…" },
+    { key: "bandcamp", name: "Bandcamp", icon: "disc", hosts: ["bandcamp.com"], ph: "yourband.bandcamp.com" },
+    { key: "soundcloud", name: "SoundCloud", icon: "wave", hosts: ["soundcloud.com"], ph: "soundcloud.com/yourband" },
+    { key: "facebook", name: "Facebook", icon: "people", hosts: ["facebook.com", "fb.com"], ph: "facebook.com/yourband" },
+    { key: "website", name: "Website", icon: "globe", hosts: [], ph: "yourband.com" },
+  ];
+  function detectPlatform(url) {
+    let host = "";
+    try { host = new URL(url).hostname.replace(/^www\./, "").toLowerCase(); } catch { return null; }
+    return PLATFORMS.find((p) => p.hosts.some((h) => host === h || host.endsWith("." + h))) || PLATFORMS.find((p) => p.key === "website");
+  }
+  function normalizeLink(raw, plat) {
+    let v = raw.trim();
+    if (!v) return null;
+    if (plat && plat.handle && /^@?[\w.\-]{1,40}$/.test(v)) return plat.handle + v.replace(/^@/, "");
+    if (!/^https?:\/\//i.test(v)) v = "https://" + v;
+    try { const u = new URL(v); if (!u.hostname.includes(".")) return null; return u.href.replace(/\/$/, ""); } catch { return null; }
+  }
+  function initLinkPicker() {
+    const btns = $("#plat-buttons"), add = $("#link-add"), input = $("#link-input"), chips = $("#link-chips");
+    let links = [], active = null;
+    btns.innerHTML = PLATFORMS.map((p) => `<button type="button" data-k="${p.key}" aria-pressed="false">${ICON[p.icon]}<span>${esc(p.name)}</span></button>`).join("") +
+      `<button type="button" data-k="paste">${ICON.link}<span>Paste a link</span></button>`;
+    function open(plat) {
+      active = plat;
+      $$("button", btns).forEach((b) => b.setAttribute("aria-pressed", String(!!plat && b.dataset.k === plat.key)));
+      $("#link-add-ico").innerHTML = ICON[plat ? plat.icon : "link"];
+      input.placeholder = plat ? plat.ph : "Paste any link: Spotify, YouTube, your site…";
+      input.setAttribute("aria-label", plat ? `${plat.name} link` : "Link");
+      add.classList.remove("hidden"); clearError(input); input.value = ""; input.focus();
+    }
+    function close() { add.classList.add("hidden"); active = null; $$("button", btns).forEach((b) => b.setAttribute("aria-pressed", "false")); }
+    function sync() {
+      chips.innerHTML = links.map((l, i) => {
+        const p = PLATFORMS.find((x) => x.key === l.key);
+        const shown = l.url.replace(/^https?:\/\/(www\.)?/, "");
+        return `<li><span class="ico" aria-hidden="true">${ICON[p.icon]}</span><b>${esc(p.name)}</b><a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(shown)}</a><button type="button" class="link-x" data-i="${i}" aria-label="Remove ${esc(p.name)} link">×</button></li>`;
+      }).join("");
+      $("#links").value = links.map((l) => `${PLATFORMS.find((x) => x.key === l.key).name}: ${l.url}`).join("\n");
+      const ig = links.find((l) => l.key === "instagram"), fb = links.find((l) => l.key === "facebook");
+      $("#links-ig").value = ig ? "@" + ig.url.replace(/^.*instagram\.com\//i, "").split(/[/?#]/)[0] : "";
+      $("#links-fb").value = fb ? fb.url : "";
+      $$("button", btns).forEach((b) => b.classList.toggle("added", links.some((l) => l.key === b.dataset.k)));
+    }
+    function commit() {
+      const url = normalizeLink(input.value, active);
+      if (!url) return fieldError(input, active ? `That doesn't look like a ${active.name} link.` : "That doesn't look like a link.");
+      const detected = detectPlatform(url);
+      const plat = active && active.key !== "website" && detected.key !== active.key && detected.key !== "website" ? detected : (active && active.key !== "website" ? active : detected);
+      if (links.some((l) => l.url === url)) { close(); return; }
+      if (links.length >= 8) return fieldError(input, "That's plenty. Remove one to add another.");
+      links.push({ key: plat.key, url }); sync(); close();
+    }
+    btns.addEventListener("click", (e) => {
+      const b = e.target.closest("button"); if (!b) return;
+      if (b.dataset.k === "paste") return open(null);
+      open(PLATFORMS.find((p) => p.key === b.dataset.k));
+    });
+    $("#link-ok").addEventListener("click", commit);
+    $("#link-cancel").addEventListener("click", close);
+    input.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); commit(); } if (e.key === "Escape") close(); });
+    input.addEventListener("paste", () => setTimeout(() => { if (!active) { const u = normalizeLink(input.value); const d = u && detectPlatform(u); if (d) $("#link-add-ico").innerHTML = ICON[d.icon]; } }, 0));
+    chips.addEventListener("click", (e) => { const x = e.target.closest(".link-x"); if (!x) return; links.splice(Number(x.dataset.i), 1); sync(); });
+    return { pending: () => !add.classList.contains("hidden") && input.value.trim(), commit };
+  }
+
   // ---------- Request view ----------
   async function initRequest() {
     show("#view-request");
+    const picker = initLinkPicker();
     const box = $("#cal"), dateInput = $("#req-date");
     try {
       const { dates } = await api("/api/dates");
@@ -516,6 +630,7 @@ footer{color:var(--muted);font-size:13px;text-align:center;margin-top:30px}
       msg(out, "");
       $$(".field-err", form).forEach((n) => n.remove());
       $$("[aria-invalid]", form).forEach((n) => n.removeAttribute("aria-invalid"));
+      if (picker.pending()) picker.commit();
       const data = Object.fromEntries(new FormData(form));
       const noDates = !$(".cal-grid", box);
       if (!data.date && !(noDates && data.altDates)) {
