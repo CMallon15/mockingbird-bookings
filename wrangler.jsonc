@@ -6,11 +6,12 @@
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
-    "run_worker_first": ["/api/*"]
+    "run_worker_first": ["/api/*", "/text/*", "/flyer/*"]
   },
   "vars": {
     "AIRTABLE_BASE": "appoA53P6VEXzkDoc",
-    "ALLOWED_ORIGIN": "https://bookings.eatmorerhinestones.com"
+    "ALLOWED_ORIGIN": "https://bookings.eatmorerhinestones.com",
+    "TUNEHATCH_SMS": ""
   },
   "routes": [
     { "pattern": "bookings.eatmorerhinestones.com", "custom_domain": true }
