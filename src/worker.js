@@ -115,6 +115,13 @@ const UPLOADABLE = ["Approved", "Agreement Signed", "Advanced", "Confirmed"];
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    try {
+      const m = url.pathname.match(/^\/(text|flyer)\/([a-f0-9]{40})\/?$/);
+      if (m && request.method === "GET") return m[1] === "text" ? await textPage(m[2], request, env) : await flyerRedirect(m[2], env);
+    } catch (err) {
+      console.error("Page error: " + (err && err.message ? err.message : String(err)));
+      return new Response("Something went wrong. Try again in a minute.", { status: 500 });
+    }
     if (!url.pathname.startsWith("/api/")) return env.ASSETS.fetch(request);
 
     try {
@@ -485,4 +492,78 @@ async function postResend(request, env) {
     });
   }
   return generic;
+}
+
+// ---------- TuneHatch text ----------
+// /flyer/<token>: permanent link to the band's current flyer (Airtable file links expire after a few hours).
+async function flyerRedirect(token, env) {
+  const rec = await findShow(env, token);
+  const f = rec && (rec.fields[F.flyer] || [])[0];
+  if (!f) return new Response("No flyer uploaded yet.", { status: 404, headers: { "content-type": "text/plain; charset=utf-8" } });
+  return Response.redirect(f.url, 302);
+}
+
+function barOpen(start) {
+  const m = String(start || "").trim().match(/^(\d{1,2})(?::(\d{2}))?\s*([ap])\.?m?\.?$/i);
+  if (!m) return "2 hours before show";
+  let h = Number(m[1]) % 12 + (m[3].toLowerCase() === "p" ? 12 : 0);
+  const min = m[2] || "00";
+  h = (h + 22) % 24;
+  const ap = h >= 12 ? "PM" : "AM";
+  return `${h % 12 || 12}:${min} ${ap}`;
+}
+
+function tunehatchText(f, origin, token) {
+  const money = (v) => (v === undefined || v === null || v === "" ? "" : "$" + Number(v).toFixed(Number(v) % 1 ? 2 : 0));
+  const date = f[F.showDate]
+    ? new Date(f[F.showDate] + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: "UTC" })
+    : "TBD";
+  const performers = f[F.showName] || f[F.band] || "";
+  const prices = [f[F.presale] != null ? `Presale ${money(f[F.presale])}` : "", f[F.dayOf] != null ? `Day of ${money(f[F.dayOf])}` : ""].filter(Boolean).join(" · ");
+  const vipSeats = f[F.vipSeats] && f[F.vipSeats] !== "None" ? f[F.vipSeats] : "";
+  const vip = vipSeats
+    ? `VIP: ${vipSeats} seats` + [f[F.vipPresale] != null ? ` · presale ${money(f[F.vipPresale])}` : "", f[F.vipDayOf] != null ? ` · day of ${money(f[F.vipDayOf])}` : ""].join("")
+    : "VIP: none";
+  const desc = String(f[F.description] || "").replace(/\s+/g, " ").trim();
+  const lines = [
+    "Mockingbird Theater: new show for TuneHatch",
+    `Date: ${date}`,
+    `Performers: ${performers}`,
+    `Show start: ${f[F.startTime] || "TBD"} · Bar opens ${barOpen(f[F.startTime])}`,
+    prices,
+    vip,
+    `Ages: ${f[F.ages] || "TBD"}`,
+    f[F.tunehatch] ? `Artist TuneHatch: ${f[F.tunehatch]}` : "",
+    (f[F.flyer] || []).length ? `Flyer: ${origin}/flyer/${token}` : "Flyer: coming",
+    desc ? `Description: ${desc.length > 500 ? desc.slice(0, 497) + "…" : desc}` : "",
+  ];
+  return lines.filter(Boolean).join("\n");
+}
+
+function htmlEsc(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+async function textPage(token, request, env) {
+  const rec = await findShow(env, token);
+  if (!rec) return new Response("Not found", { status: 404 });
+  const origin = new URL(request.url).origin;
+  const body = tunehatchText(rec.fields, origin, token);
+  const num = String(env.TUNEHATCH_SMS || "").replace(/[^\d+]/g, "");
+  const ios = /iPhone|iPad|iPod|Macintosh/.test(request.headers.get("User-Agent") || "");
+  const sms = `sms:${num}${ios ? "&" : "?"}body=${encodeURIComponent(body)}`;
+  const page = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
+<title>Text TuneHatch</title>
+<style>body{margin:0;background:#17130f;color:#ece2cd;font:16px/1.5 system-ui,sans-serif}main{max-width:560px;margin:0 auto;padding:20px 16px}
+h1{font:600 22px Georgia,serif;margin:6px 0 4px}p{color:#b3a68c;margin:0 0 14px}
+pre{white-space:pre-wrap;background:#211b15;border:1px solid #3a3026;border-radius:12px;padding:14px;font:15px/1.5 system-ui,sans-serif;margin:0 0 16px}
+a.btn,button{display:block;width:100%;text-align:center;border-radius:999px;padding:14px;font:600 17px system-ui,sans-serif;text-decoration:none;margin:0 0 10px;cursor:pointer}
+a.btn{background:#d9a441;color:#1b150e;border:0}button{background:transparent;color:#ece2cd;border:1px solid #3a3026}small{color:#b3a68c}</style></head>
+<body><main><h1>Text TuneHatch</h1><p>${htmlEsc(rec.fields[F.band] || "")}. Review the message, then tap the button to open it in Messages.</p>
+<pre id="msg">${htmlEsc(body)}</pre>
+<a class="btn" href="${htmlEsc(sms)}">Open in Messages</a>
+<button type="button" id="copy">Copy text</button>
+<small>${num ? "Addressed to TuneHatch." : "TuneHatch's number isn't set up yet, so pick them as the recipient in Messages."} On a computer, use Copy text.</small>
+</main><script>document.getElementById("copy").onclick=async function(){try{await navigator.clipboard.writeText(document.getElementById("msg").textContent);this.textContent="Copied"}catch(e){}}</script></body></html>`;
+  return new Response(page, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store", "x-robots-tag": "noindex" } });
 }
